@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [SelectionBase]
 public class Player : MonoBehaviour
@@ -97,6 +98,8 @@ public class Player : MonoBehaviour
             GameInput.Instance.DisableMovement();
 
             OnPlayerDeath?.Invoke(this, EventArgs.Empty);
+
+            SceneManager.LoadScene("Menu");
         }
 
     }
