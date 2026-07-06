@@ -130,8 +130,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.06460821, y: 0.14306727}
-  m_Size: {x: 1.8216419, y: 0.46318883}
+  m_Offset: {x: 0.002516982, y: -0.028102938}
+  m_Size: {x: 1.8484979, y: 0.60415846}
   m_Direction: 1
 --- !u!70 &685008037260991821
 CapsuleCollider2D:
@@ -167,8 +167,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.042730853, y: 1.6676795}
-  m_Size: {x: 3.0688229, y: 2.5618794}
+  m_Offset: {x: -0.0024574618, y: 1.3186282}
+  m_Size: {x: 3.0554123, y: 2.6961315}
   m_Direction: 1
 --- !u!114 &9151035730639630803
 MonoBehaviour:
@@ -196,7 +196,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7fa0352a4d56abd42ad2fc69deb72448, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NavMeshPlus::NavMeshPlus.Components.NavMeshModifierVolume
-  m_Size: {x: 1.7436173, y: 0.7827472, z: 4}
-  m_Center: {x: -0.068684936, y: 0.29699168, z: 0}
+  m_Size: {x: 1.8510172, y: 0.64178497, z: 4}
+  m_Center: {x: -0.008272529, y: 0.0049981177, z: 0}
   m_Area: 1
   m_AffectedAgents: ffffffff
