@@ -1,13 +1,4 @@
-﻿//==============================================================
-// HealthSystem
-// HealthSystem.Instance.TakeDamage (float Damage);
-// HealthSystem.Instance.HealDamage (float Heal);
-// HealthSystem.Instance.UseMana (float Mana);
-// HealthSystem.Instance.RestoreMana (float Mana);
-// Attach to the Hero.
-//==============================================================
-
-using UnityEngine.SceneManagement;
+﻿using UnityEngine.SceneManagement;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -28,52 +19,36 @@ public class HealthSystem : MonoBehaviour
 	public float manaPoint = 100f;
 	public float maxManaPoint = 100f;
 
-	//==============================================================
-	// Regenerate Health & Mana
-	//==============================================================
 	public bool Regenerate = true;
 	public float regen = 0.1f;
-	private float timeleft = 0.0f;	// Left time for current interval
+	private float timeleft = 0.0f;
 	public float regenUpdateInterval = 1f;
 
 	public bool GodMode;
 
-	//==============================================================
-	// Awake
-	//==============================================================
 	void Awake()
 	{
 		Instance = this;
 	}
-	
-	//==============================================================
-	// Awake
-	//==============================================================
+
   	void Start()
 	{
 		UpdateGraphics();
 		timeleft = regenUpdateInterval; 
 	}
 
-	//==============================================================
-	// Update
-	//==============================================================
 	void Update ()
 	{
 		if (Regenerate)
 			Regen();
 	}
 
-	//==============================================================
-	// Regenerate Health & Mana
-	//==============================================================
 	private void Regen()
 	{
 		timeleft -= Time.deltaTime;
 
-		if (timeleft <= 0.0) // Interval ended - update health & mana and start new interval
+		if (timeleft <= 0.0)
 		{
-			// Debug mode
 			if (GodMode)
 			{
 				HealDamage(maxHitPoint);
@@ -91,9 +66,6 @@ public class HealthSystem : MonoBehaviour
 		}
 	}
 
-	//==============================================================
-	// Health Logic
-	//==============================================================
 	private void UpdateHealthBar()
 	{
 		float ratio = hitPoint / maxHitPoint;
@@ -134,9 +106,6 @@ public class HealthSystem : MonoBehaviour
 		UpdateGraphics();
 	}
 
-	//==============================================================
-	// Mana Logic
-	//==============================================================
 	private void UpdateManaBar()
 	{
 		float ratio = manaPoint / maxManaPoint;
@@ -154,7 +123,7 @@ public class HealthSystem : MonoBehaviour
 	public void UseMana(float Mana)
 	{
 		manaPoint -= Mana;
-		if (manaPoint < 1) // Mana is Zero!!
+		if (manaPoint < 1)
 			manaPoint = 0;
 
 		UpdateGraphics();
@@ -175,9 +144,6 @@ public class HealthSystem : MonoBehaviour
 		UpdateGraphics();
 	}
 
-	//==============================================================
-	// Update all Bars & Globes UI graphics
-	//==============================================================
 	private void UpdateGraphics()
 	{
 		UpdateHealthBar();
@@ -186,32 +152,20 @@ public class HealthSystem : MonoBehaviour
 		UpdateManaGlobe();
 	}
 
-	//==============================================================
-	// Coroutine Player Hurts
-	//==============================================================
 	IEnumerator PlayerHurts()
 	{
-		// Player gets hurt. Do stuff.. play anim, sound..
 
-		//PopupText.Instance.Popup("Ouch!", 1f, 1f); // Demo stuff!
-
-		if (hitPoint < 1) // Health is Zero!!
+		if (hitPoint < 1) 
 		{
-			yield return StartCoroutine(PlayerDied()); // Hero is Dead
+			yield return StartCoroutine(PlayerDied());
 		}
 
 		else
 			yield return null;
 	}
 
-	//==============================================================
-	// Hero is dead
-	//==============================================================
 	IEnumerator PlayerDied()
 	{
-		// Player is dead. Do stuff.. play anim, sound..
-		//PopupText.Instance.Popup("You have died!", 1f, 1f); // Demo stuff!
-
 		yield return null;
 	}
 }

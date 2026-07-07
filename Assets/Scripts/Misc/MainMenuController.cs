@@ -10,7 +10,7 @@ public class MainMenuController : MonoBehaviour
 
     public void ExitGame()
     {
-        Debug.Log("Игра закрылась!");
         Application.Quit();
+        Debug.Log("Игра закрылась (работает только в собранной версии)");
     }
 }

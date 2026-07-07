@@ -1,19 +1,17 @@
 using UnityEngine;
-using TMPro; // Обязательно для работы с TextMeshPro
+using TMPro;
 
 public class CoinManager : MonoBehaviour
 {
-    // Синглтон, чтобы любой другой скрипт мог легко обратиться к менеджеру
     public static CoinManager Instance { get; private set; }
 
     [Header("UI Элементы")]
-    [SerializeField] private TextMeshProUGUI _coinText; // Ссылка на текст интерфейса
+    [SerializeField] private TextMeshProUGUI _coinText;
 
-    private int _coinCount = 0; // Переменная, где хранится количество монет
+    private int _coinCount = 0;
 
     private void Awake()
     {
-        // Настройка синглтона
         if (Instance == null)
         {
             Instance = this;
@@ -26,17 +24,15 @@ public class CoinManager : MonoBehaviour
 
     private void Start()
     {
-        UpdateUI(); // При старте игры показываем "0"
+        UpdateUI();
     }
 
-    // Метод, который будут вызывать монетки при подборе
     public void AddCoin(int amount)
     {
         _coinCount += amount;
-        UpdateUI(); // Обновляем цифру на экране
+        UpdateUI();
     }
 
-    // Метод для обновления текста на UI
     private void UpdateUI()
     {
         if (_coinText != null)

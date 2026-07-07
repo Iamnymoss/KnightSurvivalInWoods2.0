@@ -21,7 +21,8 @@ public class Player : MonoBehaviour
 
     [Header("Интеграция с TinyHealthSystem")]
     [SerializeField] private int maxHealth = 20;
-    [SerializeField] private HealthSystem healthSystem; // Ссылка на полоску здоровья из ассета
+    [SerializeField] private HealthSystem healthSystem;
+    [SerializeField] public GameObject restartPanel;
 
     private Vector2 _inputVector;
     private Rigidbody2D _rb;
@@ -52,7 +53,6 @@ public class Player : MonoBehaviour
         _canTakeDamage = true;
         _isAlive = true;
 
-        // ИСправлено: hitPoint с маленькой буквы
         if (healthSystem != null)
         {
             _currentHealth = (int)healthSystem.hitPoint;
@@ -90,9 +90,7 @@ public class Player : MonoBehaviour
 
             if (healthSystem != null)
             {
-                // ИСПРАВЛЕНО: используем метод TakeDamage из ассета
                 healthSystem.TakeDamage(damage);
-                // ИСПРАВЛЕНО: hitPoint с маленькой буквы
                 _currentHealth = Mathf.Max(0, (int)healthSystem.hitPoint);
             }
             else
@@ -117,9 +115,26 @@ public class Player : MonoBehaviour
             _knokBack.StopKnockBackMovement();
             GameInput.Instance.DisableMovement();
 
-            OnPlayerDeath?.Invoke(this, EventArgs.Empty);
+            if (restartPanel != null)
+            {
+                restartPanel.SetActive(true);
+            }
 
-            SceneManager.LoadScene("Menu");
+            Time.timeScale = 0f;
+
+            //int coinsEarned = 0;
+            //if (CoinManager.Instance != null)
+            //{
+
+            //    coinsEarned = CoinManager.Instance.coins;
+            //}
+
+            //if (TelegramSender.Instance != null)
+            //{
+            //    TelegramSender.Instance.SendStats(coinsEarned);
+            //}
+
+            OnPlayerDeath?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -190,5 +205,17 @@ public class Player : MonoBehaviour
             GameInput.Instance.OnPlayerAttack -= GameInput_OnPlayerAttack;
             GameInput.Instance.OnPlayerDash -= GameInput_OnPlayerDash;
         }
+    }
+
+    public void LocalRestartLevel()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void LocalGoToMenu()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("Menu");
     }
 }
