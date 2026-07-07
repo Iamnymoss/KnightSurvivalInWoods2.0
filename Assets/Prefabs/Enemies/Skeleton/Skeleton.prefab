@@ -147,6 +147,7 @@ GameObject:
   - component: {fileID: 8923805885913935504}
   - component: {fileID: 615548400355850148}
   - component: {fileID: 690754845939278038}
+  - component: {fileID: 6066622626344050131}
   m_Layer: 0
   m_Name: Skeleton
   m_TagString: Untagged
@@ -360,6 +361,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyEntity
   _enemySO: {fileID: 11400000, guid: c5c543bf68aa89b42b48868bd01285ed, type: 2}
+--- !u!114 &6066622626344050131
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6671933781217841339}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbdce8e4273f73c40801f12bd37c7d5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LootSpawner
+  _lootPrefab: {fileID: 100000, guid: 49e6ee33250214a9facc214f3a2fecb7, type: 3}
+  _minCoins: 1
+  _maxCoins: 3
+  _dropForce: 3
 --- !u!1 &8969168464254497593
 GameObject:
   m_ObjectHideFlags: 0

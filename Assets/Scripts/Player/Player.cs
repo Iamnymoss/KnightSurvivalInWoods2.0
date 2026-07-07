@@ -10,17 +10,20 @@ public class Player : MonoBehaviour
     public event EventHandler OnPlayerDeath;
     public event EventHandler OnFlashBlink;
 
+    [Header("Движение и Физика")]
     [SerializeField] private float movingSpeed = 10f;
-    [SerializeField] private int maxHealth = 20;
     [SerializeField] private float damageRecoveryTime = 0.5f;
-    [Space(20)]
+    [Space(10)]
     [SerializeField] private int dashSpeed = 4;
     [SerializeField] private float dashTime = 0.2f;
     [SerializeField] private TrailRenderer trailRenderer;
     [SerializeField] private float dashCoolDownTime = 0.25f;
 
-    private Vector2 _inputVector;
+    [Header("Интеграция с TinyHealthSystem")]
+    [SerializeField] private int maxHealth = 20;
+    [SerializeField] private HealthSystem healthSystem; // Ссылка на полоску здоровья из ассета
 
+    private Vector2 _inputVector;
     private Rigidbody2D _rb;
     private KnokBack _knokBack;
 
@@ -40,17 +43,25 @@ public class Player : MonoBehaviour
         Instance = this;
         _rb = GetComponent<Rigidbody2D>();
         _knokBack = GetComponent<KnokBack>();
-
         _mainCamera = Camera.main;
-
         _initialMovingSpeed = movingSpeed;
     }
 
     private void Start()
     {
-        _currentHealth = maxHealth;
         _canTakeDamage = true;
         _isAlive = true;
+
+        // ИСправлено: hitPoint с маленькой буквы
+        if (healthSystem != null)
+        {
+            _currentHealth = (int)healthSystem.hitPoint;
+        }
+        else
+        {
+            _currentHealth = maxHealth;
+            Debug.LogWarning("[Player] Забыл перетащить TinyHealthSystem в инспектор Игрока!");
+        }
 
         GameInput.Instance.OnPlayerAttack += GameInput_OnPlayerAttack;
         GameInput.Instance.OnPlayerDash += GameInput_OnPlayerDash;
@@ -60,7 +71,6 @@ public class Player : MonoBehaviour
     {
         _inputVector = GameInput.Instance.GetMovementVector();
     }
-
 
     private void FixedUpdate()
     {
@@ -72,15 +82,25 @@ public class Player : MonoBehaviour
 
     public bool IsAlive() => _isAlive;
 
-
     public void TakeDamage(Transform damageSource, int damage)
     {
         if (_canTakeDamage && _isAlive)
         {
             _canTakeDamage = false;
-            _currentHealth = Mathf.Max(0, _currentHealth -= damage);
-            _knokBack.GetKnockedBack(damageSource);
 
+            if (healthSystem != null)
+            {
+                // ИСПРАВЛЕНО: используем метод TakeDamage из ассета
+                healthSystem.TakeDamage(damage);
+                // ИСПРАВЛЕНО: hitPoint с маленькой буквы
+                _currentHealth = Mathf.Max(0, (int)healthSystem.hitPoint);
+            }
+            else
+            {
+                _currentHealth = Mathf.Max(0, _currentHealth -= damage);
+            }
+
+            _knokBack.GetKnockedBack(damageSource);
             OnFlashBlink?.Invoke(this, EventArgs.Empty);
 
             StartCoroutine(DamageRecoveryRoutine());
@@ -101,10 +121,9 @@ public class Player : MonoBehaviour
 
             SceneManager.LoadScene("Menu");
         }
-
     }
 
-    private void GameInput_OnPlayerDash(object sender, System.EventArgs e)
+    private void GameInput_OnPlayerDash(object sender, EventArgs e)
     {
         Dash();
     }
@@ -129,7 +148,6 @@ public class Player : MonoBehaviour
         _isDashing = false;
     }
 
-
     private IEnumerator DamageRecoveryRoutine()
     {
         yield return new WaitForSeconds(damageRecoveryTime);
@@ -141,7 +159,7 @@ public class Player : MonoBehaviour
         return _isRunning;
     }
 
-    private void GameInput_OnPlayerAttack(object sender, System.EventArgs e)
+    private void GameInput_OnPlayerAttack(object sender, EventArgs e)
     {
         ActiveWeapon.Instance.GetActiveWeapon().Attack();
     }
@@ -167,7 +185,10 @@ public class Player : MonoBehaviour
 
     private void OnDestroy()
     {
-        GameInput.Instance.OnPlayerAttack -= GameInput_OnPlayerAttack;
+        if (GameInput.Instance != null)
+        {
+            GameInput.Instance.OnPlayerAttack -= GameInput_OnPlayerAttack;
+            GameInput.Instance.OnPlayerDash -= GameInput_OnPlayerDash;
+        }
     }
-
 }
