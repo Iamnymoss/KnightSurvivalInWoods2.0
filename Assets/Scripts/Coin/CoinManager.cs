@@ -33,6 +33,11 @@ public class CoinManager : MonoBehaviour
         UpdateUI();
     }
 
+    public int GetCurrentCoins()
+    {
+        return _coinCount;
+    }
+
     private void UpdateUI()
     {
         if (_coinText != null)

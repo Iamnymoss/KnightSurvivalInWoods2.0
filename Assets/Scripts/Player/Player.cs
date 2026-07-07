@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
 [SelectionBase]
@@ -122,19 +123,29 @@ public class Player : MonoBehaviour
 
             Time.timeScale = 0f;
 
-            //int coinsEarned = 0;
-            //if (CoinManager.Instance != null)
-            //{
+            int coinsEarned = 0;
+            if (CoinManager.Instance != null)
+            {
+                coinsEarned = CoinManager.Instance.GetCurrentCoins();
+            }
 
-            //    coinsEarned = CoinManager.Instance.coins;
-            //}
-
-            //if (TelegramSender.Instance != null)
-            //{
-            //    TelegramSender.Instance.SendStats(coinsEarned);
-            //}
+            string unityId = SystemInfo.deviceUniqueIdentifier;
+            StartCoroutine(SendCoinsToServer(unityId, coinsEarned));
 
             OnPlayerDeath?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private IEnumerator SendCoinsToServer(string unityId, int coins)
+    {
+        string url = "http://127.0.0.1:8000/add_coins";
+        WWWForm form = new WWWForm();
+        form.AddField("unity_id", unityId);
+        form.AddField("coins", coins);
+
+        using (UnityWebRequest webRequest = UnityWebRequest.Post(url, form))
+        {
+            yield return webRequest.SendWebRequest();
         }
     }
 
