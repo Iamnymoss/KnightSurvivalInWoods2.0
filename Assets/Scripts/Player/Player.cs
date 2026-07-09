@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
 [SelectionBase]
@@ -11,21 +10,17 @@ public class Player : MonoBehaviour
     public event EventHandler OnPlayerDeath;
     public event EventHandler OnFlashBlink;
 
-    [Header("Движение и Физика")]
     [SerializeField] private float movingSpeed = 10f;
+    [SerializeField] private int maxHealth = 20;
     [SerializeField] private float damageRecoveryTime = 0.5f;
-    [Space(10)]
+    [Space(20)]
     [SerializeField] private int dashSpeed = 4;
     [SerializeField] private float dashTime = 0.2f;
     [SerializeField] private TrailRenderer trailRenderer;
     [SerializeField] private float dashCoolDownTime = 0.25f;
 
-    [Header("Интеграция с TinyHealthSystem")]
-    [SerializeField] private int maxHealth = 20;
-    [SerializeField] private HealthSystem healthSystem;
-    [SerializeField] public GameObject restartPanel;
-
     private Vector2 _inputVector;
+
     private Rigidbody2D _rb;
     private KnokBack _knokBack;
 
@@ -45,37 +40,36 @@ public class Player : MonoBehaviour
         Instance = this;
         _rb = GetComponent<Rigidbody2D>();
         _knokBack = GetComponent<KnokBack>();
+
         _mainCamera = Camera.main;
+
         _initialMovingSpeed = movingSpeed;
     }
 
     private void Start()
     {
+        _currentHealth = maxHealth;
         _canTakeDamage = true;
         _isAlive = true;
 
-        if (healthSystem != null)
+        if (GameInput.Instance != null)
         {
-            _currentHealth = (int)healthSystem.hitPoint;
+            GameInput.Instance.OnPlayerAttack += GameInput_OnPlayerAttack;
+            GameInput.Instance.OnPlayerDash += GameInput_OnPlayerDash;
         }
-        else
-        {
-            _currentHealth = maxHealth;
-            Debug.LogWarning("[Player] Забыл перетащить TinyHealthSystem в инспектор Игрока!");
-        }
-
-        GameInput.Instance.OnPlayerAttack += GameInput_OnPlayerAttack;
-        GameInput.Instance.OnPlayerDash += GameInput_OnPlayerDash;
     }
 
     private void Update()
     {
-        _inputVector = GameInput.Instance.GetMovementVector();
+        if (GameInput.Instance != null)
+        {
+            _inputVector = GameInput.Instance.GetMovementVector();
+        }
     }
 
     private void FixedUpdate()
     {
-        if (_knokBack.IsGettingKnockedBack)
+        if (_knokBack != null && _knokBack.IsGettingKnockedBack)
             return;
 
         HandleMovement();
@@ -88,18 +82,11 @@ public class Player : MonoBehaviour
         if (_canTakeDamage && _isAlive)
         {
             _canTakeDamage = false;
+            _currentHealth = Mathf.Max(0, _currentHealth - damage);
 
-            if (healthSystem != null)
-            {
-                healthSystem.TakeDamage(damage);
-                _currentHealth = Mathf.Max(0, (int)healthSystem.hitPoint);
-            }
-            else
-            {
-                _currentHealth = Mathf.Max(0, _currentHealth -= damage);
-            }
+            if (_knokBack != null)
+                _knokBack.GetKnockedBack(damageSource);
 
-            _knokBack.GetKnockedBack(damageSource);
             OnFlashBlink?.Invoke(this, EventArgs.Empty);
 
             StartCoroutine(DamageRecoveryRoutine());
@@ -113,43 +100,20 @@ public class Player : MonoBehaviour
         if (_currentHealth == 0 && _isAlive)
         {
             _isAlive = false;
-            _knokBack.StopKnockBackMovement();
-            GameInput.Instance.DisableMovement();
 
-            if (restartPanel != null)
-            {
-                restartPanel.SetActive(true);
-            }
+            if (_knokBack != null)
+                _knokBack.StopKnockBackMovement();
 
-            Time.timeScale = 0f;
-
-            int coinsEarned = 0;
-            if (CoinManager.Instance != null)
-            {
-                coinsEarned = CoinManager.Instance.GetCurrentCoins();
-            }
-
-            string unityId = SystemInfo.deviceUniqueIdentifier;
-            StartCoroutine(SendCoinsToServer(unityId, coinsEarned));
+            if (GameInput.Instance != null)
+                GameInput.Instance.DisableMovement();
 
             OnPlayerDeath?.Invoke(this, EventArgs.Empty);
+
+            SceneManager.LoadScene("Menu");
         }
     }
 
-    private IEnumerator SendCoinsToServer(string unityId, int coins)
-    {
-        string url = "http://127.0.0.1:8000/add_coins";
-        WWWForm form = new WWWForm();
-        form.AddField("unity_id", unityId);
-        form.AddField("coins", coins);
-
-        using (UnityWebRequest webRequest = UnityWebRequest.Post(url, form))
-        {
-            yield return webRequest.SendWebRequest();
-        }
-    }
-
-    private void GameInput_OnPlayerDash(object sender, EventArgs e)
+    private void GameInput_OnPlayerDash(object sender, System.EventArgs e)
     {
         Dash();
     }
@@ -185,9 +149,12 @@ public class Player : MonoBehaviour
         return _isRunning;
     }
 
-    private void GameInput_OnPlayerAttack(object sender, EventArgs e)
+    private void GameInput_OnPlayerAttack(object sender, System.EventArgs e)
     {
-        ActiveWeapon.Instance.GetActiveWeapon().Attack();
+        if (ActiveWeapon.Instance != null && ActiveWeapon.Instance.GetActiveWeapon() != null)
+        {
+            ActiveWeapon.Instance.GetActiveWeapon().Attack();
+        }
     }
 
     private void HandleMovement()
@@ -205,28 +172,18 @@ public class Player : MonoBehaviour
 
     public Vector3 GetPlayerScreenPosition()
     {
-        Vector3 playerScreenPosition = _mainCamera.WorldToScreenPoint(transform.position);
-        return playerScreenPosition;
+        if (_mainCamera == null) _mainCamera = Camera.main;
+        return _mainCamera.WorldToScreenPoint(transform.position);
     }
 
     private void OnDestroy()
     {
+        // КРИТИЧЕСКИЙ ФИКС: Обязательно отписываемся от ОБОИХ событий при уничтожении игрока,
+        // чтобы при переходе на процедурный уровень не было ошибок утечки памяти.
         if (GameInput.Instance != null)
         {
             GameInput.Instance.OnPlayerAttack -= GameInput_OnPlayerAttack;
             GameInput.Instance.OnPlayerDash -= GameInput_OnPlayerDash;
         }
-    }
-
-    public void LocalRestartLevel()
-    {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-    }
-
-    public void LocalGoToMenu()
-    {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene("Menu");
     }
 }

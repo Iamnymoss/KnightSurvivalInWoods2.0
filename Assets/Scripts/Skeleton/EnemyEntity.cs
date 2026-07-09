@@ -57,6 +57,12 @@ public class EnemyEntity : MonoBehaviour
     {
         if (_currentHealth <= 0)
         {
+            // ==========================================
+            // ТОТ САМЫЙ ФИКС: Снимаем тег "Enemy"
+            // Теперь портал перестанет считать этого врага живым
+            // ==========================================
+            gameObject.tag = "Untagged";
+
             _boxCollider2D.enabled = false;
             _polygonCollider2D.enabled = false;
 

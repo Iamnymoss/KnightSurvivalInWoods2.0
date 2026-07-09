@@ -148,9 +148,10 @@ GameObject:
   - component: {fileID: 615548400355850148}
   - component: {fileID: 690754845939278038}
   - component: {fileID: 6066622626344050131}
+  - component: {fileID: 7323504414568835588}
   m_Layer: 0
   m_Name: Skeleton
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -377,6 +378,22 @@ MonoBehaviour:
   _minCoins: 1
   _maxCoins: 3
   _dropForce: 3
+--- !u!114 &7323504414568835588
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6671933781217841339}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ef3145909aa1d3498df79af67181a8a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDifficulty
+  baseMaxHealth: 30
+  baseDamage: 2
+  scaledMaxHealth: 0
+  scaledDamage: 0
 --- !u!1 &8969168464254497593
 GameObject:
   m_ObjectHideFlags: 0
