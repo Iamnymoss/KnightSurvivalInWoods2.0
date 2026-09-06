@@ -7,13 +7,18 @@ using UnityEngine.SceneManagement;
 public class Player : MonoBehaviour
 {
     public static Player Instance { get; private set; }
+
     public event EventHandler OnPlayerDeath;
     public event EventHandler OnFlashBlink;
 
+    [Header("Передвижение")]
     [SerializeField] private float movingSpeed = 10f;
+
+    [Header("Здоровье")]
     [SerializeField] private int maxHealth = 20;
     [SerializeField] private float damageRecoveryTime = 0.5f;
-    [Space(20)]
+
+    [Header("Рывок")]
     [SerializeField] private int dashSpeed = 4;
     [SerializeField] private float dashTime = 0.2f;
     [SerializeField] private TrailRenderer trailRenderer;
@@ -23,25 +28,25 @@ public class Player : MonoBehaviour
 
     private Rigidbody2D _rb;
     private KnokBack _knokBack;
+    private Camera _mainCamera;
+    private HealthSystem _healthSystem;
 
-    private readonly float _minMovingSpeed = 0.1f;
-    private bool _isRunning = false;
+    private const float MinMovingSpeed = 0.1f;
 
     private int _currentHealth;
     private bool _canTakeDamage;
     private bool _isAlive;
+    private bool _isRunning;
     private bool _isDashing;
-    private float _initialMovingSpeed;
 
-    private Camera _mainCamera;
-    private HealthSystem _healthSystem;
+    private float _initialMovingSpeed;
 
     private void Awake()
     {
         Instance = this;
+
         _rb = GetComponent<Rigidbody2D>();
         _knokBack = GetComponent<KnokBack>();
-
         _mainCamera = Camera.main;
 
         _initialMovingSpeed = movingSpeed;
@@ -49,11 +54,13 @@ public class Player : MonoBehaviour
 
     private void Start()
     {
-        _currentHealth = maxHealth;
+        RestoreHealth();
+
         _canTakeDamage = true;
-        _isAlive = true;
+        _isAlive = _currentHealth > 0;
 
         _healthSystem = HealthSystem.Instance;
+
         if (_healthSystem == null)
         {
             _healthSystem = FindFirstObjectByType<HealthSystem>();
@@ -63,8 +70,35 @@ public class Player : MonoBehaviour
 
         if (GameInput.Instance != null)
         {
-            GameInput.Instance.OnPlayerAttack += GameInput_OnPlayerAttack;
-            GameInput.Instance.OnPlayerDash += GameInput_OnPlayerDash;
+            GameInput.Instance.OnPlayerAttack +=
+                GameInput_OnPlayerAttack;
+
+            GameInput.Instance.OnPlayerDash +=
+                GameInput_OnPlayerDash;
+        }
+    }
+
+    private void RestoreHealth()
+    {
+        if (LevelManager.Instance != null &&
+            LevelManager.Instance.HasSavedRunState)
+        {
+            // Живой игрок не должен появляться с нулевым HP.
+            _currentHealth = Mathf.Clamp(
+                LevelManager.Instance.SavedHealth,
+                1,
+                maxHealth
+            );
+
+            Debug.Log(
+                $"Восстановлено здоровье игрока: " +
+                $"{_currentHealth}/{maxHealth}"
+            );
+        }
+        else
+        {
+            // В начале новой игры здоровье полное.
+            _currentHealth = maxHealth;
         }
     }
 
@@ -72,30 +106,55 @@ public class Player : MonoBehaviour
     {
         if (GameInput.Instance != null)
         {
-            _inputVector = GameInput.Instance.GetMovementVector();
+            _inputVector =
+                GameInput.Instance.GetMovementVector();
         }
     }
 
     private void FixedUpdate()
     {
-        if (_knokBack != null && _knokBack.IsGettingKnockedBack)
+        if (_knokBack != null &&
+            _knokBack.IsGettingKnockedBack)
+        {
             return;
+        }
 
         HandleMovement();
     }
 
-    public bool IsAlive() => _isAlive;
+    public bool IsAlive()
+    {
+        return _isAlive;
+    }
+
+    // LevelManager использует этот метод перед сменой сцены.
+    public int GetCurrentHealth()
+    {
+        return _currentHealth;
+    }
+
+    public int GetMaxHealth()
+    {
+        return maxHealth;
+    }
 
     public void TakeDamage(Transform damageSource, int damage)
     {
         if (_canTakeDamage && _isAlive)
         {
             _canTakeDamage = false;
-            _currentHealth = Mathf.Max(0, _currentHealth - damage);
+
+            _currentHealth = Mathf.Max(
+                0,
+                _currentHealth - damage
+            );
+
             SyncHealthUI();
 
             if (_knokBack != null)
+            {
                 _knokBack.GetKnockedBack(damageSource);
+            }
 
             OnFlashBlink?.Invoke(this, EventArgs.Empty);
 
@@ -109,29 +168,43 @@ public class Player : MonoBehaviour
     {
         if (_healthSystem != null)
         {
-            _healthSystem.SetPlayerHealth(_currentHealth, maxHealth);
+            _healthSystem.SetPlayerHealth(
+                _currentHealth,
+                maxHealth
+            );
         }
     }
 
     private void DetectDeath()
     {
-        if (_currentHealth == 0 && _isAlive)
+        if (_currentHealth != 0 || !_isAlive)
         {
-            _isAlive = false;
-
-            if (_knokBack != null)
-                _knokBack.StopKnockBackMovement();
-
-            if (GameInput.Instance != null)
-                GameInput.Instance.DisableMovement();
-
-            OnPlayerDeath?.Invoke(this, EventArgs.Empty);
-
-            SceneManager.LoadScene("Menu");
+            return;
         }
+
+        _isAlive = false;
+
+        if (_knokBack != null)
+        {
+            _knokBack.StopKnockBackMovement();
+        }
+
+        if (GameInput.Instance != null)
+        {
+            GameInput.Instance.DisableMovement();
+        }
+
+        OnPlayerDeath?.Invoke(this, EventArgs.Empty);
+
+        // После загрузки Menu LevelManager сбросит HP,
+        // монеты и номер уровня.
+        SceneManager.LoadScene("Menu");
     }
 
-    private void GameInput_OnPlayerDash(object sender, System.EventArgs e)
+    private void GameInput_OnPlayerDash(
+        object sender,
+        EventArgs eventArgs
+    )
     {
         Dash();
     }
@@ -139,26 +212,41 @@ public class Player : MonoBehaviour
     private void Dash()
     {
         if (!_isDashing)
+        {
             StartCoroutine(DashRoutine());
+        }
     }
 
     private IEnumerator DashRoutine()
     {
         _isDashing = true;
         movingSpeed *= dashSpeed;
-        trailRenderer.emitting = true;
+
+        if (trailRenderer != null)
+        {
+            trailRenderer.emitting = true;
+        }
+
         yield return new WaitForSeconds(dashTime);
 
-        trailRenderer.emitting = false;
+        if (trailRenderer != null)
+        {
+            trailRenderer.emitting = false;
+        }
+
         movingSpeed = _initialMovingSpeed;
 
         yield return new WaitForSeconds(dashCoolDownTime);
+
         _isDashing = false;
     }
 
     private IEnumerator DamageRecoveryRoutine()
     {
-        yield return new WaitForSeconds(damageRecoveryTime);
+        yield return new WaitForSeconds(
+            damageRecoveryTime
+        );
+
         _canTakeDamage = true;
     }
 
@@ -167,41 +255,54 @@ public class Player : MonoBehaviour
         return _isRunning;
     }
 
-    private void GameInput_OnPlayerAttack(object sender, System.EventArgs e)
+    private void GameInput_OnPlayerAttack(
+        object sender,
+        EventArgs eventArgs
+    )
     {
-        if (ActiveWeapon.Instance != null && ActiveWeapon.Instance.GetActiveWeapon() != null)
+        if (ActiveWeapon.Instance == null)
         {
-            ActiveWeapon.Instance.GetActiveWeapon().Attack();
+            return;
+        }
+
+        Sword currentWeapon =
+            ActiveWeapon.Instance.GetActiveWeapon();
+
+        if (currentWeapon != null)
+        {
+            currentWeapon.Attack();
         }
     }
 
     private void HandleMovement()
     {
-        _rb.MovePosition(_rb.position + _inputVector * (movingSpeed * Time.fixedDeltaTime));
-        if (Mathf.Abs(_inputVector.x) > _minMovingSpeed || Mathf.Abs(_inputVector.y) > _minMovingSpeed)
-        {
-            _isRunning = true;
-        }
-        else
-        {
-            _isRunning = false;
-        }
+        _rb.MovePosition(
+            _rb.position +
+            _inputVector *
+            (movingSpeed * Time.fixedDeltaTime)
+        );
+
+        _isRunning =
+            Mathf.Abs(_inputVector.x) > MinMovingSpeed ||
+            Mathf.Abs(_inputVector.y) > MinMovingSpeed;
     }
 
-    public Vector3 GetPlayerScreenPosition()
-    {
-        if (_mainCamera == null) _mainCamera = Camera.main;
-        return _mainCamera.WorldToScreenPoint(transform.position);
-    }
+   
 
     private void OnDestroy()
     {
-        // КРИТИЧЕСКИЙ ФИКС: Обязательно отписываемся от ОБОИХ событий при уничтожении игрока,
-        // чтобы при переходе на процедурный уровень не было ошибок утечки памяти.
         if (GameInput.Instance != null)
         {
-            GameInput.Instance.OnPlayerAttack -= GameInput_OnPlayerAttack;
-            GameInput.Instance.OnPlayerDash -= GameInput_OnPlayerDash;
+            GameInput.Instance.OnPlayerAttack -=
+                GameInput_OnPlayerAttack;
+
+            GameInput.Instance.OnPlayerDash -=
+                GameInput_OnPlayerDash;
+        }
+
+        if (Instance == this)
+        {
+            Instance = null;
         }
     }
 }

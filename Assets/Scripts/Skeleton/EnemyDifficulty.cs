@@ -1,32 +1,51 @@
 using UnityEngine;
 
+[DisallowMultipleComponent]
 public class EnemyDifficulty : MonoBehaviour
 {
-    [Header("Базовые настройки (для 1-го уровня)")]
-    [SerializeField] private int baseMaxHealth = 30;
-    [SerializeField] private int baseDamage = 2;
+    [Header("Рост характеристик за уровень")]
 
-    // Сюда будут записываться уже измененные параметры для текущего уровня
-    public int scaledMaxHealth;
-    public int scaledDamage;
+    [Tooltip("0.25 означает увеличение здоровья на 25% за уровень")]
+    [Range(0f, 2f)]
+    [SerializeField] private float healthIncreasePerLevel = 0.25f;
 
-    void Awake()
+    [Tooltip("0.15 означает увеличение урона на 15% за уровень")]
+    [Range(0f, 2f)]
+    [SerializeField] private float damageIncreasePerLevel = 0.15f;
+
+    private int GetCurrentLevel()
     {
-        // Проверяем, существует ли менеджер уровней
-        int level = 1;
-        if (LevelManager.Instance != null)
+        if (LevelManager.Instance == null)
         {
-            level = LevelManager.Instance.currentLevel;
+            return 1;
         }
 
-        // Математика прогрессии: каждый уровень увеличивает характеристики на 30%
-        scaledMaxHealth = Mathf.RoundToInt(baseMaxHealth * Mathf.Pow(1.3f, level - 1));
-        scaledDamage = Mathf.RoundToInt(baseDamage * Mathf.Pow(1.3f, level - 1));
+        return Mathf.Max(1, LevelManager.Instance.currentLevel);
+    }
 
-        Debug.Log($"[Скелет] Спавн на уровне {level}. Здоровье: {scaledMaxHealth}, Урон: {scaledDamage}");
+    public int CalculateHealth(int baseHealth)
+    {
+        int completedLevels = GetCurrentLevel() - 1;
 
-        // TODO: Передай эти переменные в свой основной скрипт здоровья/атаки скелета
-        // Пример: 
-        // GetComponent<EnemyHealth>().SetHealth(scaledMaxHealth);
+        float multiplier =
+            1f + healthIncreasePerLevel * completedLevels;
+
+        return Mathf.Max(
+            1,
+            Mathf.CeilToInt(baseHealth * multiplier)
+        );
+    }
+
+    public int CalculateDamage(int baseDamage)
+    {
+        int completedLevels = GetCurrentLevel() - 1;
+
+        float multiplier =
+            1f + damageIncreasePerLevel * completedLevels;
+
+        return Mathf.Max(
+            1,
+            Mathf.RoundToInt(baseDamage * multiplier)
+        );
     }
 }

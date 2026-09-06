@@ -10,14 +10,23 @@ public class ActiveWeapon : MonoBehaviour
     {
         Instance = this;
     }
+
     private void Update()
     {
-        if (Player.Instance.IsAlive())
+        if (Player.Instance == null ||
+            GameInput.Instance == null)
         {
-            FollowMousePosition();
+            return;
         }
-        
+
+        if (!Player.Instance.IsAlive())
+        {
+            return;
+        }
+
+        FollowMousePosition();
     }
+
     public Sword GetActiveWeapon()
     {
         return sword;
@@ -25,16 +34,21 @@ public class ActiveWeapon : MonoBehaviour
 
     private void FollowMousePosition()
     {
-        Vector3 mousePos = GameInput.Instance.GetMousePosition();
-        Vector3 playerPosition = Player.Instance.GetPlayerScreenPosition();
+        bool mouseIsOnLeft =
+            GameInput.Instance.IsMouseLeftOfWorldPosition(
+                Player.Instance.transform.position
+            );
 
-        if (mousePos.x < playerPosition.x)
+        transform.rotation = mouseIsOnLeft
+            ? Quaternion.Euler(0f, 180f, 0f)
+            : Quaternion.Euler(0f, 0f, 0f);
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
         {
-            transform.rotation = Quaternion.Euler(0, 180, 0);
-        }
-        else
-        {
-            transform.rotation = Quaternion.Euler(0, 0, 0);
+            Instance = null;
         }
     }
 }

@@ -3263,7 +3263,7 @@ Tilemap:
       - {fileID: -1528259909, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: -1843905731, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: 476548529, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
-      m_AnimationSpeed: 3.0000002
+      m_AnimationSpeed: 3
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: 3, z: 0}
@@ -3393,7 +3393,7 @@ Tilemap:
       - {fileID: -1421773134, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: 1739743111, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: 702511552, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
-      m_AnimationSpeed: 3.0000002
+      m_AnimationSpeed: 3
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -1, y: 5, z: 0}
@@ -3403,7 +3403,7 @@ Tilemap:
       - {fileID: 2098548887, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: -1455339376, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: 1391395771, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
-      m_AnimationSpeed: 3
+      m_AnimationSpeed: 3.0000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 0, y: 5, z: 0}
@@ -3443,7 +3443,7 @@ Tilemap:
       - {fileID: 2098548887, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: -1455339376, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: 1391395771, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
-      m_AnimationSpeed: 3.0000002
+      m_AnimationSpeed: 3
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 2, y: 6, z: 0}
@@ -3513,7 +3513,7 @@ Tilemap:
       - {fileID: 2102945318, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: -2040860643, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: 1733397073, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
-      m_AnimationSpeed: 3
+      m_AnimationSpeed: 3.0000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -12, y: 8, z: 0}
@@ -3523,7 +3523,7 @@ Tilemap:
       - {fileID: 36067726, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: -311544031, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: 385634228, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
-      m_AnimationSpeed: 3.0000002
+      m_AnimationSpeed: 3
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 5, y: 8, z: 0}
@@ -3543,7 +3543,7 @@ Tilemap:
       - {fileID: 2102945318, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: -2040860643, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: 1733397073, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
-      m_AnimationSpeed: 3.0000002
+      m_AnimationSpeed: 3
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -12, y: 9, z: 0}
@@ -3663,7 +3663,7 @@ Tilemap:
       - {fileID: 1721649120, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: -1710319104, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: 865403089, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
-      m_AnimationSpeed: 3.0000002
+      m_AnimationSpeed: 3
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -2, y: 13, z: 0}
@@ -3673,7 +3673,7 @@ Tilemap:
       - {fileID: 2098259393, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: -747036688, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: 319636206, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
-      m_AnimationSpeed: 3
+      m_AnimationSpeed: 3.0000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -1, y: 13, z: 0}
@@ -3863,7 +3863,7 @@ Tilemap:
       - {fileID: 2033819654, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: 930921176, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
       - {fileID: 1921343865, guid: 8476b7a66db24284d814ed2c919315a4, type: 3}
-      m_AnimationSpeed: 3
+      m_AnimationSpeed: 3.0000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -7, y: 15, z: 0}

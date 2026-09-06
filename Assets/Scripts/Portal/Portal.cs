@@ -1,71 +1,100 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class Portal : MonoBehaviour
 {
-    private BoxCollider2D _collider;
+    private Collider2D[] _portalColliders;
     private SpriteRenderer _spriteRenderer;
-    private bool _isActive = false;
+
+    private bool _isActive;
+    private bool _isLoadingNextLevel;
 
     private void Awake()
     {
-        _collider = GetComponent<BoxCollider2D>();
-        _spriteRenderer = GetComponent<SpriteRenderer>();
+        // Получаем любые 2D-коллайдеры портала.
+        // Это работает и с CapsuleCollider2D, и с BoxCollider2D.
+        _portalColliders = GetComponents<Collider2D>();
+        _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
     }
 
     private void Start()
     {
-        // При спавне портала всегда ставим его в полупрозрачное состояние
-        SetPortalState(false);
+        SetPortalActive(false);
     }
 
     private void Update()
     {
-        // Находим всех врагов на сцене
-        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        if (_isLoadingNextLevel)
+        {
+            return;
+        }
 
-        // Портал должен быть активен ТОЛЬКО если врагов на карте 0
-        bool shouldBeActive = (enemies.Length == 0);
+        // При смерти EnemyEntity меняет тег врага на Untagged.
+        bool hasLivingEnemies =
+            GameObject.FindGameObjectWithTag("Enemy") != null;
 
-        // Обновляем состояние, если оно изменилось
+        bool shouldBeActive = !hasLivingEnemies;
+
         if (_isActive != shouldBeActive)
         {
-            SetPortalState(shouldBeActive);
+            SetPortalActive(shouldBeActive);
         }
     }
 
-    private void SetPortalState(bool state)
+    private void SetPortalActive(bool active)
     {
-        _isActive = state;
+        _isActive = active;
 
-        if (_collider != null)
+        if (_portalColliders != null)
         {
-            _collider.enabled = state;
+            foreach (Collider2D portalCollider in _portalColliders)
+            {
+                if (portalCollider != null)
+                {
+                    portalCollider.enabled = active;
+                }
+            }
         }
 
         if (_spriteRenderer != null)
         {
-            Color c = _spriteRenderer.color;
-            // 0.2f — тусклый/полупрозрачный, 1f — яркий активный
-            c.a = state ? 1f : 0.2f;
-            _spriteRenderer.color = c;
+            Color portalColor = _spriteRenderer.color;
+            portalColor.a = active ? 1f : 0.2f;
+            _spriteRenderer.color = portalColor;
+        }
+
+        if (active)
+        {
+            Debug.Log("Все враги убиты. Портал активирован.");
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        if (_isActive && collision.GetComponentInParent<Player>() != null)
+        if (!_isActive || _isLoadingNextLevel)
         {
-            Debug.Log("Портал сработал! Переход на следующий уровень...");
-
-            if (LevelManager.Instance != null)
-            {
-                LevelManager.Instance.AdvanceToNextLevel();
-            }
-            else
-            {
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-            }
+            return;
         }
+
+        Player player = other.GetComponentInParent<Player>();
+
+        if (player == null)
+        {
+            return;
+        }
+
+        if (LevelManager.Instance == null)
+        {
+            Debug.LogError(
+                "Портал не может загрузить уровень: LevelManager не найден."
+            );
+            return;
+        }
+
+        _isLoadingNextLevel = true;
+        SetPortalActive(false);
+
+        Debug.Log("Игрок вошёл в портал. Загружается следующий уровень.");
+
+        LevelManager.Instance.AdvanceToNextLevel();
     }
 }

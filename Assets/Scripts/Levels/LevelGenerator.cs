@@ -37,6 +37,16 @@ public class LevelGenerator : MonoBehaviour
     [Min(1f)][SerializeField] private float floorCellsPerObstacle = 90f;
     [Min(0)][SerializeField] private int safeRadius = 3;
 
+    [Header("Увеличение сложности")]
+
+    [Tooltip("Сколько новых врагов добавляется на каждом уровне")]
+    [Min(1)]
+    [SerializeField] private int additionalEnemiesPerLevel = 1;
+
+    [Tooltip("Максимальное количество врагов. 0 = без ограничения")]
+    [Min(0)]
+    [SerializeField] private int maxEnemyCount = 30;
+
     private readonly List<Vector3Int> _floorPositions = new List<Vector3Int>();
     private readonly List<GameObject> _generatedEntities = new List<GameObject>();
 
@@ -77,16 +87,50 @@ public class LevelGenerator : MonoBehaviour
             Player.Instance.transform.position = CellCenter(playerCell);
         }
 
-        Spawn(portalPrefab, portalCell, occupied);
+        GameObject generatedPortal =
+            Spawn(portalPrefab, portalCell, occupied);
+
+        if (generatedPortal != null &&
+            generatedPortal.GetComponent<Portal>() == null)
+        {
+            generatedPortal.AddComponent<Portal>();
+        }
 
         List<Vector3Int> candidates = new List<Vector3Int>(_floorPositions);
         ShufflePositions(candidates);
 
-        int enemyCount = Mathf.Max(1, Mathf.RoundToInt(_floorPositions.Count / floorCellsPerEnemy));
+        int currentLevel = LevelManager.Instance != null
+            ? Mathf.Max(1, LevelManager.Instance.currentLevel)
+            : 1;
+
+        int baseEnemyCount = Mathf.Max(
+            1,
+            Mathf.RoundToInt(
+                _floorPositions.Count / floorCellsPerEnemy
+            )
+        );
+
+        int enemiesAddedPerLevel =
+            Mathf.Max(1, additionalEnemiesPerLevel);
+
+        int enemyCount =
+            baseEnemyCount +
+            (currentLevel - 1) * enemiesAddedPerLevel;
+
+        if (maxEnemyCount > 0)
+        {
+            enemyCount = Mathf.Min(enemyCount, maxEnemyCount);
+        }
+
+        Debug.Log(
+            $"Генерация уровня {currentLevel}. " +
+            $"Запланировано врагов: {enemyCount}"
+        );
+
         int breakableCount = Mathf.RoundToInt(_floorPositions.Count / floorCellsPerBreakable);
         int obstacleCount = Mathf.RoundToInt(_floorPositions.Count / floorCellsPerObstacle);
 
-        SpawnGroup(enemyPrefabs, enemyCount, candidates, occupied, 2);
+        SpawnGroup(enemyPrefabs, enemyCount, candidates, occupied, 1);
         SpawnGroup(breakablePrefabs, breakableCount, candidates, occupied, 1);
         SpawnGroup(obstaclePrefabs, obstacleCount, candidates, occupied, 1);
 
@@ -269,16 +313,28 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
-    private void Spawn(GameObject prefab, Vector3Int cell, HashSet<Vector3Int> occupied)
+    private GameObject Spawn(
+        GameObject prefab,
+        Vector3Int cell,
+        HashSet<Vector3Int> occupied
+    )
     {
         if (prefab == null)
         {
-            return;
+            Debug.LogError("LevelGenerator: не назначен префаб.");
+            return null;
         }
 
-        GameObject instance = Instantiate(prefab, CellCenter(cell), Quaternion.identity);
+        GameObject instance = Instantiate(
+            prefab,
+            CellCenter(cell),
+            Quaternion.identity
+        );
+
         _generatedEntities.Add(instance);
         occupied.Add(cell);
+
+        return instance;
     }
 
     private Vector3 CellCenter(Vector3Int cell)
