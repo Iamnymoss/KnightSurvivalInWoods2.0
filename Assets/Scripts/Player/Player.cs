@@ -34,6 +34,7 @@ public class Player : MonoBehaviour
     private float _initialMovingSpeed;
 
     private Camera _mainCamera;
+    private HealthSystem _healthSystem;
 
     private void Awake()
     {
@@ -51,6 +52,14 @@ public class Player : MonoBehaviour
         _currentHealth = maxHealth;
         _canTakeDamage = true;
         _isAlive = true;
+
+        _healthSystem = HealthSystem.Instance;
+        if (_healthSystem == null)
+        {
+            _healthSystem = FindFirstObjectByType<HealthSystem>();
+        }
+
+        SyncHealthUI();
 
         if (GameInput.Instance != null)
         {
@@ -83,6 +92,7 @@ public class Player : MonoBehaviour
         {
             _canTakeDamage = false;
             _currentHealth = Mathf.Max(0, _currentHealth - damage);
+            SyncHealthUI();
 
             if (_knokBack != null)
                 _knokBack.GetKnockedBack(damageSource);
@@ -93,6 +103,14 @@ public class Player : MonoBehaviour
         }
 
         DetectDeath();
+    }
+
+    private void SyncHealthUI()
+    {
+        if (_healthSystem != null)
+        {
+            _healthSystem.SetPlayerHealth(_currentHealth, maxHealth);
+        }
     }
 
     private void DetectDeath()

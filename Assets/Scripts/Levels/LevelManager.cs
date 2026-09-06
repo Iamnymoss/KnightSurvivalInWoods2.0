@@ -24,20 +24,34 @@ public class LevelManager : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += SceneManager_OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= SceneManager_OnSceneLoaded;
+    }
+
+    private void SceneManager_OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "Menu")
+        {
+            currentLevel = 1;
+        }
+    }
+
     public void AdvanceToNextLevel()
     {
         currentLevel++;
         Debug.Log("Переход на уровень: " + currentLevel);
 
-        // Если мы переходим с 1-го уровня, загружаем процедурную сцену.
-        // Если мы уже на ней (уровень 2, 3, 4...), перезагружаем её же, и карта перегенерируется.
-        if (currentLevel == 2)
-        {
-            SceneManager.LoadScene(proceduralSceneName);
-        }
-        else
-        {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        }
+        // Первый портал ведёт в процедурную сцену, следующие перезагружают её с новым seed.
+        string activeSceneName = SceneManager.GetActiveScene().name;
+        string nextSceneName = activeSceneName == proceduralSceneName
+            ? activeSceneName
+            : proceduralSceneName;
+        SceneManager.LoadScene(nextSceneName);
     }
 }

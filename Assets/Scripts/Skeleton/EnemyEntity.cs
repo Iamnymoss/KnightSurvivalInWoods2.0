@@ -15,6 +15,7 @@ public class EnemyEntity : MonoBehaviour
     private PolygonCollider2D _polygonCollider2D;
     private BoxCollider2D _boxCollider2D;
     private EnemyAI _enemyAI;
+    private bool _attackHitboxActive;
 
     private void Awake()
     {
@@ -37,17 +38,35 @@ public class EnemyEntity : MonoBehaviour
 
     public void PolygonColliderTurnOff()
     {
+        _attackHitboxActive = false;
         _polygonCollider2D.enabled = false;
     }
 
     public void PolygonColliderTurnOn()
     {
+        _attackHitboxActive = true;
         _polygonCollider2D.enabled = true;
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        TryDamagePlayer(collision);
     }
 
     private void OnTriggerStay2D(Collider2D collision)
     {
-        if (collision.transform.TryGetComponent(out Player player))
+        TryDamagePlayer(collision);
+    }
+
+    private void TryDamagePlayer(Collider2D collision)
+    {
+        if (!_attackHitboxActive)
+        {
+            return;
+        }
+
+        Player player = collision.GetComponentInParent<Player>();
+        if (player != null)
         {
             player.TakeDamage(transform, _enemySO.enemyDamageAmount);
         }

@@ -1,35 +1,36 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Portal : MonoBehaviour
 {
-    private Animator _animator;
     private BoxCollider2D _collider;
+    private SpriteRenderer _spriteRenderer;
     private bool _isActive = false;
 
     private void Awake()
     {
-        _animator = GetComponent<Animator>();
         _collider = GetComponent<BoxCollider2D>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     private void Start()
     {
-        // В начале уровня портал спит и невидим (или полупрозрачен)
+        // При спавне портала всегда ставим его в полупрозрачное состояние
         SetPortalState(false);
     }
 
     private void Update()
     {
-        if (!_isActive)
-        {
-            // Ищем, есть ли на сцене объекты с тегом "Enemy"
-            GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        // Находим всех врагов на сцене
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
 
-            // Если все скелеты убиты — активируем портал!
-            if (enemies.Length == 0)
-            {
-                SetPortalState(true);
-            }
+        // Портал должен быть активен ТОЛЬКО если врагов на карте 0
+        bool shouldBeActive = (enemies.Length == 0);
+
+        // Обновляем состояние, если оно изменилось
+        if (_isActive != shouldBeActive)
+        {
+            SetPortalState(shouldBeActive);
         }
     }
 
@@ -37,26 +38,34 @@ public class Portal : MonoBehaviour
     {
         _isActive = state;
 
-        // Включаем/выключаем коллайдер, чтобы нельзя было уйти раньше времени
-        if (_collider != null) _collider.enabled = state;
-
-        // Управляем видимостью: если выключен — делаем прозрачным
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr != null)
+        if (_collider != null)
         {
-            Color c = sr.color;
-            c.a = state ? 1f : 0.2f; // 20% прозрачности, если враги еще живы
-            sr.color = c;
+            _collider.enabled = state;
+        }
+
+        if (_spriteRenderer != null)
+        {
+            Color c = _spriteRenderer.color;
+            // 0.2f — тусклый/полупрозрачный, 1f — яркий активный
+            c.a = state ? 1f : 0.2f;
+            _spriteRenderer.color = c;
         }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Проверяем, что в портал зашел именно Игрок
-        if (_isActive && collision.CompareTag("Player"))
+        if (_isActive && collision.GetComponentInParent<Player>() != null)
         {
-            // Даем команду менеджеру уровней перезагрузить сцену и повысить сложность
-            LevelManager.Instance.AdvanceToNextLevel();
+            Debug.Log("Портал сработал! Переход на следующий уровень...");
+
+            if (LevelManager.Instance != null)
+            {
+                LevelManager.Instance.AdvanceToNextLevel();
+            }
+            else
+            {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            }
         }
     }
 }

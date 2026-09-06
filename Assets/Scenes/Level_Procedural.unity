@@ -151,88 +151,31 @@ MonoBehaviour:
   floorTilemap: {fileID: 1495954219}
   wallTilemap: {fileID: 735152241}
   waterTilemap: {fileID: 486425691}
-  extraTilemapsToClear:
-  - {fileID: 1004916577}
-  - {fileID: 626677964}
+  pathTilemap: {fileID: 1804970881}
+  extraTilemapsToClear: []
   floorTiles:
-  - {fileID: 11400000, guid: 063d636a88e494941ac2b919e71dbb9f, type: 2}
-  - {fileID: 11400000, guid: f6be97cbc8679b247b47868d074030fb, type: 2}
-  - {fileID: 11400000, guid: 84719a8090e4909438435e616f0f7b98, type: 2}
-  - {fileID: 11400000, guid: c7dab2827ca90474f9d3ef4d69e37ec9, type: 2}
-  - {fileID: 11400000, guid: bb100da1c0c213d42ac6e4c75b714fca, type: 2}
-  - {fileID: 11400000, guid: 92e6a6a02c3dc364a984433ea03fd357, type: 2}
+  - {fileID: 11400000, guid: dcf86f13ca16f054bad6728526209b5d, type: 2}
   wallTiles:
-  - {fileID: 11400000, guid: 71c4c31c367044247843546badcad606, type: 2}
-  - {fileID: 11400000, guid: 46abde44a19e46840827eb4ce74e6474, type: 2}
-  - {fileID: 11400000, guid: 5e3edc389a12be74fa622b29fda95c76, type: 2}
-  - {fileID: 11400000, guid: 8b19ef781cae59d4eb0d764c96e98da3, type: 2}
-  - {fileID: 11400000, guid: a371416d9c06f8d4baeb03e0e959417a, type: 2}
-  - {fileID: 11400000, guid: 3b32ac7f9d7107f43a18b971add8ac3c, type: 2}
-  - {fileID: 11400000, guid: b892387e18057964390b6a7dea200af2, type: 2}
-  - {fileID: 11400000, guid: 75b88d68aa4b7a444a1605a7256a04db, type: 2}
-  - {fileID: 11400000, guid: f2434aa65ca7fe14fb39f3ac9004e505, type: 2}
-  - {fileID: 11400000, guid: 5f474856e92423e48a4e90e5f64c59bb, type: 2}
-  - {fileID: 11400000, guid: e05401a6f7b6e294a86d42ed6f55afff, type: 2}
-  - {fileID: 11400000, guid: 2e55276b74da5464380f532e2a39b37a, type: 2}
-  - {fileID: 11400000, guid: 10d58e76c76bf064d8a29867996b4af6, type: 2}
-  - {fileID: 11400000, guid: 01915908802ad244fb7c5eb1e64aae31, type: 2}
-  - {fileID: 11400000, guid: 73d897d1ccbea144bab9a3c17b1b26ce, type: 2}
-  - {fileID: 11400000, guid: d59192b39376e7e4595811270872759b, type: 2}
-  - {fileID: 11400000, guid: 5deb5ea00a12361498f16e636d3fd29b, type: 2}
-  - {fileID: 11400000, guid: 5383f52c22bd9e74bbdb852344df28e4, type: 2}
-  - {fileID: 11400000, guid: f96d9baf3da45ce4982500f8ff4b5e94, type: 2}
-  - {fileID: 11400000, guid: 10c2fd9c1bd9da149b7e019aa7ba5d00, type: 2}
-  - {fileID: 11400000, guid: a58caffa132fabc4689a8f9a1d8a6749, type: 2}
-  - {fileID: 11400000, guid: 959a7a09ad9014e4cae750a14318de40, type: 2}
-  - {fileID: 11400000, guid: ae100d3f12225704b9e12f18a1961096, type: 2}
-  - {fileID: 11400000, guid: beac70f190e22f647a7d230a12828024, type: 2}
-  - {fileID: 11400000, guid: ede6783ef482a364abe8e818c8b54158, type: 2}
-  - {fileID: 11400000, guid: ce6abb8de1b24314286398745b10e970, type: 2}
-  - {fileID: 11400000, guid: 78cba411ce7beb244af1f25e8c095f6b, type: 2}
-  - {fileID: 11400000, guid: 724c94fd2490aef479ab23e496f4a3af, type: 2}
-  - {fileID: 11400000, guid: fae55c5a0b9882a45b4e5eea93cd8e9e, type: 2}
-  - {fileID: 11400000, guid: 5a80363f8523e7442a56545a77714afb, type: 2}
+  - {fileID: 11400000, guid: 4d5e481a14fbeaa4cb8c5763c2b45cae, type: 2}
   waterTiles:
-  - {fileID: 11400000, guid: e6a2bb1b4d62eb24286ca063d8daa135, type: 2}
+  - {fileID: 11400000, guid: f09573dd0341c194bb61c4f9bb4f8154, type: 2}
+  pathTile: {fileID: 11400000, guid: 5d5b06bd0c4b36f4498b0f6dbb0b9244, type: 2}
   enemyPrefabs:
   - {fileID: 6671933781217841339, guid: 0a5cdf13a231b9446bcb166fd154be42, type: 3}
   breakablePrefabs:
   - {fileID: 4109939774132665897, guid: b18a1a27eefb2834b95d823645b7f544, type: 3}
-  - {fileID: 9011255623378819054, guid: b60f75d23ad5d754eba0634441aa6d28, type: 3}
-  - {fileID: 6237847183371236437, guid: 20bdbceed6b90c0488d43add6e2ed142, type: 3}
-  - {fileID: 2907726750713898338, guid: 0b8f86546c1bf6141911734e88e14876, type: 3}
-  - {fileID: 4109939774132665897, guid: d01a46627a23c3c478c1d6c09ef27a4e, type: 3}
-  - {fileID: 5939305275904843138, guid: 10c68c56d8b66d04faeafe2d744b8e0b, type: 3}
-  - {fileID: 1337841032695223749, guid: a9dab13bd2161474291370fb10ee880b, type: 3}
-  - {fileID: 1337841032695223749, guid: dfd963635d895d34fbb2e6a5dc561d4c, type: 3}
-  - {fileID: 4109939774132665897, guid: 152030ac54a222049a571a27e49eeb09, type: 3}
-  - {fileID: 8362179237816369507, guid: 96b2151bd7d94c146800ba785295b876, type: 3}
-  - {fileID: 7362301885622300957, guid: bc5ea61d79b05084d90787e65d746af6, type: 3}
-  - {fileID: 4792957307252713406, guid: 22cfd0f50a8d8a548a7bb0e0438d3019, type: 3}
-  - {fileID: 5026134792906941375, guid: 997782c17d20ec84c876280de6eb287e, type: 3}
-  - {fileID: 6784421986285384380, guid: 168db15de839e6747b9a5c1092c1c5f0, type: 3}
-  - {fileID: 4109939774132665897, guid: 0a39ec39f05067c48b76de4a1ac8c56c, type: 3}
-  - {fileID: 3200208942688859659, guid: 4f488774b8db06149b64320177532861, type: 3}
-  - {fileID: 8366428558184443218, guid: 8ebcd4b6b49615443ae64fff8c5a0d9f, type: 3}
   obstaclePrefabs:
   - {fileID: 2865795852425677396, guid: befef07c2fba62445853bcf38905e67f, type: 3}
-  - {fileID: 4048315251291076972, guid: fd0ffc5397129d64e8eb170b0d15a7d0, type: 3}
-  - {fileID: 8166029031683992107, guid: f9528a44418212142b820717cac48c72, type: 3}
-  - {fileID: 2382891849487208522, guid: 70487636ca332734bbbcc65668861834, type: 3}
-  - {fileID: 3210612782266616146, guid: b770f06ca7616644f8d386e8aac4fd28, type: 3}
-  - {fileID: 8173310941989813631, guid: 450f55e6f266a0241adfb16e2b5ed109, type: 3}
-  - {fileID: 1618427798255298663, guid: 514fb1dfe1d34414f94225b2194af2ca, type: 3}
-  - {fileID: 1596891799813082149, guid: c171a8b9bd54b7146aa271c4e986cb92, type: 3}
-  - {fileID: 2865795852425677396, guid: 24af022cec4038d40a873bab6428c0c5, type: 3}
-  - {fileID: 3550444865658590299, guid: 8755a80c909e8474bb0b73d2e38360e1, type: 3}
-  - {fileID: 8972293387881972260, guid: 0313fa4c3a99a1a4f89783966f1bcde3, type: 3}
-  - {fileID: 4265868689055275928, guid: 1cf15db942a449141bf9ac0a79ef7656, type: 3}
   portalPrefab: {fileID: 7839762026820528022, guid: 2af3a4b5da84c2b47b3d6b462c76d387, type: 3}
-  minWidth: 15
-  maxWidth: 30
-  minHeight: 15
-  maxHeight: 30
-  waterChance: 5
+  minWidth: 22
+  maxWidth: 24
+  minHeight: 12
+  maxHeight: 14
+  waterChance: 3.9
+  floorCellsPerEnemy: 900
+  floorCellsPerBreakable: 275
+  floorCellsPerObstacle: 90
+  safeRadius: 3
 --- !u!4 &32698747
 Transform:
   m_ObjectHideFlags: 0
@@ -1742,7 +1685,7 @@ GameObject:
   - component: {fileID: 622113479}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1856,7 +1799,7 @@ CapsuleCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0

@@ -4,149 +4,358 @@ using UnityEngine.Tilemaps;
 
 public class LevelGenerator : MonoBehaviour
 {
-    [Header("БЛОК 1: Холсты (Тайлмапы со сцены)")]
-    [SerializeField] private Tilemap floorTilemap;   // Для травы (Grass)
-    [SerializeField] private Tilemap wallTilemap;    // Основной слой для скал (Cliff 1)
-    [SerializeField] private Tilemap waterTilemap;   // Слой для воды (Water)
-    [SerializeField] private Tilemap[] extraTilemapsToClear; // Сюда закинь Cliff 2, Cliff 3, Path, чтобы они стирались
+    [Header("Tilemaps")]
+    [SerializeField] private Tilemap floorTilemap;
+    [SerializeField] private Tilemap wallTilemap;
+    [SerializeField] private Tilemap waterTilemap;
+    [SerializeField] private Tilemap pathTilemap;
+    [SerializeField] private Tilemap[] extraTilemapsToClear;
 
-    [Header("БЛОК 2: Кисточки (Тайлы из окна Project)")]
-    [SerializeField] private TileBase[] floorTiles;  // Разные виды травы/земли
-    [SerializeField] private TileBase[] wallTiles;   // Твои 3 вида скалы
-    [SerializeField] private TileBase[] waterTiles;  // Тайлы воды
+    [Header("Tiles from the first level")]
+    [SerializeField] private TileBase[] floorTiles;
+    [SerializeField] private TileBase[] wallTiles;
+    [SerializeField] private TileBase[] waterTiles;
+    [SerializeField] private TileBase pathTile;
 
-    [Header("БЛОК 3: Списки префабов")]
+    [Header("Prefabs")]
     [SerializeField] private GameObject[] enemyPrefabs;
     [SerializeField] private GameObject[] breakablePrefabs;
     [SerializeField] private GameObject[] obstaclePrefabs;
-
-    [Header("Обязательные префабы")]
     [SerializeField] private GameObject portalPrefab;
 
-    [Header("Настройки размера карты")]
-    [SerializeField] private int minWidth = 15;
-    [SerializeField] private int maxWidth = 30;
-    [SerializeField] private int minHeight = 15;
-    [SerializeField] private int maxHeight = 30;
-    [Range(0f, 100f)]
-    [SerializeField] private float waterChance = 5f; // Шанс появления лужи воды вместо земли
+    [Header("Map size")]
+    [SerializeField] private int minWidth = 24;
+    [SerializeField] private int maxWidth = 36;
+    [SerializeField] private int minHeight = 24;
+    [SerializeField] private int maxHeight = 36;
+    [Range(0f, 20f)]
+    [SerializeField] private float waterChance = 5f;
 
-    private List<Vector3Int> _floorPositions = new List<Vector3Int>();
+    [Header("SampleScene-like population")]
+    [Min(1f)][SerializeField] private float floorCellsPerEnemy = 900f;
+    [Min(1f)][SerializeField] private float floorCellsPerBreakable = 275f;
+    [Min(1f)][SerializeField] private float floorCellsPerObstacle = 90f;
+    [Min(0)][SerializeField] private int safeRadius = 3;
 
-    void Start()
+    private readonly List<Vector3Int> _floorPositions = new List<Vector3Int>();
+    private readonly List<GameObject> _generatedEntities = new List<GameObject>();
+
+    private void Start()
     {
         GenerateNewLevel();
     }
 
     public void GenerateNewLevel()
     {
-        // 1. Очищаем ВСЕ холсты
-        if (floorTilemap != null) floorTilemap.ClearAllTiles();
-        if (wallTilemap != null) wallTilemap.ClearAllTiles();
-        if (waterTilemap != null) waterTilemap.ClearAllTiles();
+        ClearLevel();
 
-        foreach (Tilemap tm in extraTilemapsToClear)
+        int width = Random.Range(minWidth, maxWidth + 1);
+        int height = Random.Range(minHeight, maxHeight + 1);
+        HashSet<Vector3Int> waterPositions = CreateWaterClusters(width, height);
+
+        PaintMap(width, height, waterPositions);
+        if (_floorPositions.Count < 2)
         {
-            if (tm != null) tm.ClearAllTiles();
+            Debug.LogError("LevelGenerator could not create enough walkable floor cells.");
+            return;
         }
 
-        _floorPositions.Clear();
-        ClearOldEntities();
-
-        // 2. Выбираем размер
-        int currentWidth = Random.Range(minWidth, maxWidth);
-        int currentHeight = Random.Range(minHeight, maxHeight);
-
-        // 3. Рисуем карту
-        for (int x = -2; x < currentWidth + 2; x++)
+        Vector3Int playerCell = PickPlayerCell(width, height);
+        Vector3Int portalCell = PickFarthestCell(playerCell);
+        HashSet<Vector3Int> occupied = new HashSet<Vector3Int>();
+        List<Vector3Int> pathCells = PaintPath(playerCell, portalCell);
+        foreach (Vector3Int pathCell in pathCells)
         {
-            for (int y = -2; y < currentHeight + 2; y++)
-            {
-                Vector3Int tilePos = new Vector3Int(x, y, 0);
+            occupied.Add(pathCell);
+        }
 
-                // Если это граница карты (стены)
-                if (x < 0 || x >= currentWidth || y < 0 || y >= currentHeight)
+        ReserveArea(occupied, playerCell, safeRadius);
+        ReserveArea(occupied, portalCell, safeRadius);
+
+        if (Player.Instance != null)
+        {
+            Player.Instance.transform.position = CellCenter(playerCell);
+        }
+
+        Spawn(portalPrefab, portalCell, occupied);
+
+        List<Vector3Int> candidates = new List<Vector3Int>(_floorPositions);
+        ShufflePositions(candidates);
+
+        int enemyCount = Mathf.Max(1, Mathf.RoundToInt(_floorPositions.Count / floorCellsPerEnemy));
+        int breakableCount = Mathf.RoundToInt(_floorPositions.Count / floorCellsPerBreakable);
+        int obstacleCount = Mathf.RoundToInt(_floorPositions.Count / floorCellsPerObstacle);
+
+        SpawnGroup(enemyPrefabs, enemyCount, candidates, occupied, 2);
+        SpawnGroup(breakablePrefabs, breakableCount, candidates, occupied, 1);
+        SpawnGroup(obstaclePrefabs, obstacleCount, candidates, occupied, 1);
+
+        if (NavMeshRebakeHelper.Instance != null)
+        {
+            NavMeshRebakeHelper.Instance.RequestRebake();
+        }
+    }
+
+    private void PaintMap(int width, int height, HashSet<Vector3Int> waterPositions)
+    {
+        for (int x = -2; x < width + 2; x++)
+        {
+            for (int y = -2; y < height + 2; y++)
+            {
+                Vector3Int cell = new Vector3Int(x, y, 0);
+                bool isBorder = x < 0 || x >= width || y < 0 || y >= height;
+
+                if (isBorder)
                 {
-                    if (wallTiles.Length > 0 && wallTilemap != null)
-                    {
-                        // Выбираем случайную скалу из твоих 3-х видов
-                        TileBase randomWall = wallTiles[Random.Range(0, wallTiles.Length)];
-                        wallTilemap.SetTile(tilePos, randomWall);
-                    }
+                    SetRandomTile(wallTilemap, cell, wallTiles);
+                }
+                else if (waterPositions.Contains(cell))
+                {
+                    SetRandomTile(waterTilemap, cell, waterTiles);
                 }
                 else
                 {
-                    // Внутри карты: делаем шанс на появление воды
-                    if (Random.Range(0f, 100f) < waterChance && waterTiles.Length > 0 && waterTilemap != null)
+                    SetRandomTile(floorTilemap, cell, floorTiles);
+                    _floorPositions.Add(cell);
+                }
+            }
+        }
+    }
+
+    private HashSet<Vector3Int> CreateWaterClusters(int width, int height)
+    {
+        HashSet<Vector3Int> result = new HashSet<Vector3Int>();
+        int targetCount = Mathf.RoundToInt(width * height * waterChance / 100f);
+        int attempts = 0;
+
+        while (result.Count < targetCount && attempts++ < targetCount * 8)
+        {
+            int clusterRadius = Random.Range(1, 3);
+            int centerX = Random.Range(2, Mathf.Max(3, width - 2));
+            int centerY = Random.Range(2, Mathf.Max(3, height - 2));
+
+            for (int x = -clusterRadius; x <= clusterRadius; x++)
+            {
+                for (int y = -clusterRadius; y <= clusterRadius; y++)
+                {
+                    if (result.Count >= targetCount)
                     {
-                        TileBase randomWater = waterTiles[Random.Range(0, waterTiles.Length)];
-                        waterTilemap.SetTile(tilePos, randomWater);
-                        // Не добавляем воду в _floorPositions, чтобы игрок и враги не спавнились в воде
+                        break;
                     }
-                    else if (floorTiles.Length > 0 && floorTilemap != null)
+
+                    if (x * x + y * y <= clusterRadius * clusterRadius + Random.Range(0, 2))
                     {
-                        // Рисуем обычную землю
-                        TileBase randomFloor = floorTiles[Random.Range(0, floorTiles.Length)];
-                        floorTilemap.SetTile(tilePos, randomFloor);
-                        _floorPositions.Add(tilePos);
+                        result.Add(new Vector3Int(centerX + x, centerY + y, 0));
                     }
                 }
             }
         }
 
-        if (_floorPositions.Count == 0) return; // Защита от ошибок
+        return result;
+    }
 
-        ShufflePositions(_floorPositions);
+    private Vector3Int PickPlayerCell(int width, int height)
+    {
+        Vector3Int preferredCorner = Random.value < 0.5f
+            ? new Vector3Int(2, 2, 0)
+            : new Vector3Int(width - 3, height - 3, 0);
 
-        // 4. Ставим игрока
-        if (Player.Instance != null)
+        return PickClosestCell(preferredCorner);
+    }
+
+    private Vector3Int PickClosestCell(Vector3Int target)
+    {
+        Vector3Int best = _floorPositions[0];
+        int bestDistance = int.MaxValue;
+
+        foreach (Vector3Int cell in _floorPositions)
         {
-            Vector3 playerStartWorldPos = floorTilemap.CellToWorld(_floorPositions[0]) + new Vector3(0.5f, 0.5f, 0);
-            Player.Instance.transform.position = playerStartWorldPos;
+            int distance = Mathf.Abs(cell.x - target.x) + Mathf.Abs(cell.y - target.y);
+            if (distance < bestDistance)
+            {
+                best = cell;
+                bestDistance = distance;
+            }
         }
 
-        // 5. Ставим портал в конец
-        Vector3 portalWorldPos = floorTilemap.CellToWorld(_floorPositions[_floorPositions.Count - 1]) + new Vector3(0.5f, 0.5f, 0);
-        Instantiate(portalPrefab, portalWorldPos, Quaternion.identity);
+        return best;
+    }
 
-        // 6. Спавним предметы и врагов
-        for (int i = 1; i < _floorPositions.Count - 1; i++)
+    private Vector3Int PickFarthestCell(Vector3Int origin)
+    {
+        Vector3Int best = _floorPositions[0];
+        int bestDistance = -1;
+
+        foreach (Vector3Int cell in _floorPositions)
         {
-            Vector3 spawnWorldPos = floorTilemap.CellToWorld(_floorPositions[i]) + new Vector3(0.5f, 0.5f, 0);
-            float chance = Random.Range(0f, 100f);
+            int distance = Mathf.Abs(cell.x - origin.x) + Mathf.Abs(cell.y - origin.y);
+            if (distance > bestDistance)
+            {
+                best = cell;
+                bestDistance = distance;
+            }
+        }
 
-            if (chance < 5f && enemyPrefabs.Length > 0)
+        return best;
+    }
+
+    private List<Vector3Int> PaintPath(Vector3Int start, Vector3Int destination)
+    {
+        List<Vector3Int> result = new List<Vector3Int>();
+        Vector3Int current = start;
+
+        while (current != destination)
+        {
+            MakePathCell(current, result);
+
+            bool canMoveX = current.x != destination.x;
+            bool canMoveY = current.y != destination.y;
+            bool moveX = canMoveX && (!canMoveY || Random.value < 0.5f);
+
+            current += moveX
+                ? new Vector3Int(destination.x > current.x ? 1 : -1, 0, 0)
+                : new Vector3Int(0, destination.y > current.y ? 1 : -1, 0);
+        }
+
+        MakePathCell(destination, result);
+        return result;
+    }
+
+    private void MakePathCell(Vector3Int cell, List<Vector3Int> pathCells)
+    {
+        if (waterTilemap != null && waterTilemap.HasTile(cell))
+        {
+            waterTilemap.SetTile(cell, null);
+            SetRandomTile(floorTilemap, cell, floorTiles);
+            if (!_floorPositions.Contains(cell))
             {
-                Instantiate(enemyPrefabs[Random.Range(0, enemyPrefabs.Length)], spawnWorldPos, Quaternion.identity);
+                _floorPositions.Add(cell);
             }
-            else if (chance < 12f && breakablePrefabs.Length > 0)
+        }
+
+        if (pathTilemap != null && pathTile != null)
+        {
+            pathTilemap.SetTile(cell, pathTile);
+        }
+
+        pathCells.Add(cell);
+    }
+
+    private void SpawnGroup(GameObject[] prefabs, int count, List<Vector3Int> candidates,
+        HashSet<Vector3Int> occupied, int spacing)
+    {
+        if (prefabs == null || prefabs.Length == 0)
+        {
+            return;
+        }
+
+        int spawned = 0;
+        foreach (Vector3Int cell in candidates)
+        {
+            if (spawned >= count)
             {
-                Instantiate(breakablePrefabs[Random.Range(0, breakablePrefabs.Length)], spawnWorldPos, Quaternion.identity);
+                break;
             }
-            else if (chance < 20f && obstaclePrefabs.Length > 0)
+
+            if (IsAreaOccupied(occupied, cell, spacing))
             {
-                Instantiate(obstaclePrefabs[Random.Range(0, obstaclePrefabs.Length)], spawnWorldPos, Quaternion.identity);
+                continue;
+            }
+
+            GameObject prefab = prefabs[Random.Range(0, prefabs.Length)];
+            Spawn(prefab, cell, occupied);
+            ReserveArea(occupied, cell, spacing);
+            spawned++;
+        }
+    }
+
+    private void Spawn(GameObject prefab, Vector3Int cell, HashSet<Vector3Int> occupied)
+    {
+        if (prefab == null)
+        {
+            return;
+        }
+
+        GameObject instance = Instantiate(prefab, CellCenter(cell), Quaternion.identity);
+        _generatedEntities.Add(instance);
+        occupied.Add(cell);
+    }
+
+    private Vector3 CellCenter(Vector3Int cell)
+    {
+        return floorTilemap.GetCellCenterWorld(cell);
+    }
+
+    private static void SetRandomTile(Tilemap tilemap, Vector3Int cell, TileBase[] tiles)
+    {
+        if (tilemap != null && tiles != null && tiles.Length > 0)
+        {
+            tilemap.SetTile(cell, tiles[Random.Range(0, tiles.Length)]);
+        }
+    }
+
+    private static bool IsAreaOccupied(HashSet<Vector3Int> occupied, Vector3Int center, int radius)
+    {
+        for (int x = -radius; x <= radius; x++)
+        {
+            for (int y = -radius; y <= radius; y++)
+            {
+                if (occupied.Contains(center + new Vector3Int(x, y, 0)))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static void ReserveArea(HashSet<Vector3Int> occupied, Vector3Int center, int radius)
+    {
+        for (int x = -radius; x <= radius; x++)
+        {
+            for (int y = -radius; y <= radius; y++)
+            {
+                occupied.Add(center + new Vector3Int(x, y, 0));
             }
         }
     }
 
-    private void ClearOldEntities()
+    private void ClearLevel()
     {
-        GameObject[] oldEnemies = GameObject.FindGameObjectsWithTag("Enemy");
-        foreach (GameObject enemy in oldEnemies) Destroy(enemy);
+        if (floorTilemap != null) floorTilemap.ClearAllTiles();
+        if (wallTilemap != null) wallTilemap.ClearAllTiles();
+        if (waterTilemap != null) waterTilemap.ClearAllTiles();
+        if (pathTilemap != null) pathTilemap.ClearAllTiles();
 
-        GameObject[] oldPortals = GameObject.FindGameObjectsWithTag("Portal");
-        foreach (GameObject p in oldPortals) Destroy(p);
+        if (extraTilemapsToClear != null)
+        {
+            foreach (Tilemap tilemap in extraTilemapsToClear)
+            {
+                if (tilemap != null) tilemap.ClearAllTiles();
+            }
+        }
+
+        foreach (GameObject entity in _generatedEntities)
+        {
+            if (entity != null) Destroy(entity);
+        }
+
+        _generatedEntities.Clear();
+        _floorPositions.Clear();
+
+        foreach (GameObject enemy in GameObject.FindGameObjectsWithTag("Enemy")) Destroy(enemy);
+        foreach (GameObject portal in GameObject.FindGameObjectsWithTag("Portal")) Destroy(portal);
     }
 
-    private void ShufflePositions(List<Vector3Int> list)
+    private static void ShufflePositions(List<Vector3Int> positions)
     {
-        for (int i = list.Count - 1; i > 0; i--)
+        for (int i = positions.Count - 1; i > 0; i--)
         {
-            int rnd = Random.Range(0, i + 1);
-            Vector3Int temp = list[i];
-            list[i] = list[rnd];
-            list[rnd] = temp;
+            int randomIndex = Random.Range(0, i + 1);
+            Vector3Int temporary = positions[i];
+            positions[i] = positions[randomIndex];
+            positions[randomIndex] = temporary;
         }
     }
 }
