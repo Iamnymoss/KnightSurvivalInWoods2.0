@@ -24,6 +24,9 @@ public class Player : MonoBehaviour
     [SerializeField] private TrailRenderer trailRenderer;
     [SerializeField] private float dashCoolDownTime = 0.25f;
 
+    [Header("UI")]
+    [SerializeField] private GameObject restartPanel;
+
     private Vector2 _inputVector;
 
     private Rigidbody2D _rb;
@@ -83,7 +86,6 @@ public class Player : MonoBehaviour
         if (LevelManager.Instance != null &&
             LevelManager.Instance.HasSavedRunState)
         {
-            // Живой игрок не должен появляться с нулевым HP.
             _currentHealth = Mathf.Clamp(
                 LevelManager.Instance.SavedHealth,
                 1,
@@ -97,7 +99,6 @@ public class Player : MonoBehaviour
         }
         else
         {
-            // В начале новой игры здоровье полное.
             _currentHealth = maxHealth;
         }
     }
@@ -127,7 +128,6 @@ public class Player : MonoBehaviour
         return _isAlive;
     }
 
-    // LevelManager использует этот метод перед сменой сцены.
     public int GetCurrentHealth()
     {
         return _currentHealth;
@@ -196,9 +196,15 @@ public class Player : MonoBehaviour
 
         OnPlayerDeath?.Invoke(this, EventArgs.Empty);
 
-        // После загрузки Menu LevelManager сбросит HP,
-        // монеты и номер уровня.
-        SceneManager.LoadScene("Menu");
+        if (CoinManager.Instance != null)
+        {
+            CoinManager.Instance.SendCoinsToServer();
+        }
+
+        if (restartPanel != null)
+        {
+            restartPanel.SetActive(true);
+        }
     }
 
     private void GameInput_OnPlayerDash(

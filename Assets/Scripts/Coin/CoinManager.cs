@@ -1,5 +1,7 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class CoinManager : MonoBehaviour
 {
@@ -7,6 +9,9 @@ public class CoinManager : MonoBehaviour
 
     [Header("UI монет")]
     [SerializeField] private TextMeshProUGUI _coinText;
+
+    [Header("Настройки сервера")]
+    [SerializeField] private string serverUrl = "http://127.0.0.1:8000/add_coins";
 
     private int _coinCount;
 
@@ -37,31 +42,19 @@ public class CoinManager : MonoBehaviour
 
     private void RestoreCoins()
     {
-        if (LevelManager.Instance != null &&
-            LevelManager.Instance.HasSavedRunState)
+        if (LevelManager.Instance != null && LevelManager.Instance.HasSavedRunState)
         {
-            _coinCount = Mathf.Max(
-                0,
-                LevelManager.Instance.SavedCoins
-            );
-
-            Debug.Log(
-                $"Восстановлено монет: {_coinCount}"
-            );
+            _coinCount = Mathf.Max(0, LevelManager.Instance.SavedCoins);
         }
         else
         {
-            // Новая игра начинается без монет.
             _coinCount = 0;
         }
     }
 
     public void AddCoin(int amount)
     {
-        if (amount <= 0)
-        {
-            return;
-        }
+        if (amount <= 0) return;
 
         _coinCount += amount;
         UpdateUI();
@@ -77,6 +70,43 @@ public class CoinManager : MonoBehaviour
         if (_coinText != null)
         {
             _coinText.text = _coinCount.ToString();
+        }
+    }
+
+    public void SendCoinsToServer()
+    {
+        string unityId = SystemInfo.deviceUniqueIdentifier;
+
+        if (_coinCount <= 0)
+        {
+            Debug.Log("[CoinManager] Монет 0, отправка пропущена.");
+            return;
+        }
+
+        Debug.Log($"[CoinManager] Отправка {_coinCount} монет на сервер для ID: {unityId}");
+        StartCoroutine(SendCoinsRoutine(unityId, _coinCount));
+    }
+
+    private IEnumerator SendCoinsRoutine(string unityId, int coinsToSend)
+    {
+        WWWForm form = new WWWForm();
+        form.AddField("unity_id", unityId);
+        form.AddField("coins", coinsToSend.ToString());
+
+        using (UnityWebRequest www = UnityWebRequest.Post(serverUrl, form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log($"[CoinManager] УСПЕХ! Ответ сервера: {www.downloadHandler.text}");
+                _coinCount = 0;
+                UpdateUI();
+            }
+            else
+            {
+                Debug.LogError($"[CoinManager] ОШИБКА: {www.error} | Код: {www.responseCode}");
+            }
         }
     }
 }
